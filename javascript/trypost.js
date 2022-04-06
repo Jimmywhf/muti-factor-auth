@@ -16,3 +16,14 @@ axios
 //   .get(interface)
 //   .then(res => (console.log(res.data)))
 //   .catch(error => console.log(error))
+
+// var interface = 'http://10.128.239.20:8008'
+// var interface = 'http://127.0.0.1:2233/api/blockFlow'
+
+// axios
+//   .post(interface, {
+//   'target_ip': '10.0.0.1',
+//   'target_mac': 'xx:xx:xx:xx:xx:xx',
+//   'block_action': 'open'
+//   }).then(res => (console.log(res.data)))
+//     .catch(error => console.log(error))

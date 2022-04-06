@@ -9,6 +9,7 @@ const express = require('express');
 const path = require('path');
 const res = require('express/lib/response');
 const req = require('express/lib/request');
+const net = require('net');
 
 const moment = require('moment');
 const { application } = require('express');
@@ -129,10 +130,17 @@ async function main() {
                 console.log("I get a GET request");
                 var result = await contract1.submitTransaction('query');
                 result = result.toString();
-                res.send(result);
+                var output_data = {
+                    'code': '1',
+                    'data': result
+                }
+                res.json(output_data);
             } catch(error) {
                 console.error(error);
-                res.send(String(error));
+                res.json({
+                    'code': '0',
+                    "data": []
+                });
             }
             
             // console.log('Transaction has been submitted');
@@ -145,10 +153,17 @@ async function main() {
                 console.log("I get a GET request to get WARNINGs");
                 var result = await contract2.submitTransaction('query');
                 result = result.toString();
-                res.send(result);
+                var output_data = {
+                    'code': '1',
+                    'data': result
+                }
+                res.json(output_data);
             } catch(error) {
                 console.error(error);
-                res.send(String(error));
+                res.json({
+                    'code': '0',
+                    'data': []
+                });
             }
             
             // console.log('Transaction has been submitted');
@@ -156,21 +171,76 @@ async function main() {
 
         // 调用wpx的借口实现阻断功能
         app.post('/api/blockFlow', async function(req, res) {
-            const inputIP = req.body["target_ip"];
-            const action = req.body["block_action"];
-            axios
-            .post(blockFlowPort, {
-                "ip": inputIP,
-                "blocked": action
-            })
-            .then(resp => {
-                if(resp.data.state == 1){
-                    res.json({"block_flow_result": true});
-                } else {
-                    res.send({"block_flow_result": false});
-                }  
-            })
-            .catch(error => console.log(error))
+            console.log(req.body)
+
+            var buf = Buffer.from(JSON.stringify(req.body));
+            var port = 8008;
+            var host = '10.128.239.20';
+
+            var client= new net.Socket();
+            client.connect(port,host,function(){
+                client.write(buf);
+                console.log('连接到服务器！');
+            //向端口写入数据到达服务端
+            });
+            client.on('data',function(data){
+                var getdata = JSON.parse(data);
+                // console.log(getdata['code']);
+                console.log(data);
+                client.end();
+                console.log('和服务器断开连接。');
+                res.json(getdata);
+            //得到服务端返回来的数据
+            });
+            client.on('error',function(error){
+            //错误出现之后关闭连接
+            console.log('error:'+error);
+            res.json({
+                'code': '1',
+                'result': false,
+                'details': ''
+            });
+            // client.destory();
+            });
+            client.on('close',function(){
+            //正常关闭连接
+            console.log('Connection closed');
+            });
+
+            
+
+            // var wpxinterface = 'http://10.128.239.20:8008'
+            // axios
+            // .post(wpxinterface, {
+            //     'target_ip': target_ip,
+            //     'target_mac': target_mac,
+            //     'block_action': block_action
+            // })
+            // .then(resp => {
+            //     console.log(resp);
+            //     res.send(resp)
+            //     // if(resp.data[state] == 1){
+            //     //     res.json({
+            //     //         "code": re,
+            //     //         "result": true, 
+            //     //         "details": resp.data[info]
+            //     //     });
+            //     // } else if(resp.data[state] == 0){
+            //     //     res.json({
+            //     //         "code": code,
+            //     //         "result": false, 
+            //     //         "details": resp.data[info]
+            //     //     });
+            //     // } else {
+            //     //     code = "0";
+            //     //     res.json({
+            //     //         "code": code,
+            //     //         "result": false, 
+            //     //         "details": ""
+            //     //     });
+            //     // }
+            // })
+            // .catch(error => console.log(error))
         })
 
         // async function getResult (contract, mainKey, value){
