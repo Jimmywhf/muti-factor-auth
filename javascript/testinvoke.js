@@ -90,7 +90,7 @@ async function main() {
                 // 检查出错误，将错误信息存储到拎一个channel按上去
                 if(wrongDetail !== "Wrong"){
                     var warningResult = await contract2.submitTransaction('verify', currentTime, req.body.macAddress, req.body.ipAddress, wrongDetail);
-                    console.log(warningResult)
+                    console.log("--------"+warningResult)
                 }
 
                 // 以前的逻辑
@@ -176,36 +176,46 @@ async function main() {
             var buf = Buffer.from(JSON.stringify(req.body));
             var port = 8008;
             var host = '10.128.239.20';
-
-            var client= new net.Socket();
-            client.connect(port,host,function(){
-                client.write(buf);
-                console.log('连接到服务器！');
-            //向端口写入数据到达服务端
-            });
-            client.on('data',function(data){
-                var getdata = JSON.parse(data);
-                // console.log(getdata['code']);
-                console.log(data);
-                client.end();
-                console.log('和服务器断开连接。');
-                res.json(getdata);
-            //得到服务端返回来的数据
-            });
-            client.on('error',function(error){
-            //错误出现之后关闭连接
-            console.log('error:'+error);
-            res.json({
-                'code': '1',
-                'result': false,
-                'details': ''
-            });
-            // client.destory();
-            });
-            client.on('close',function(){
-            //正常关闭连接
-            console.log('Connection closed');
-            });
+            try{
+                var client= new net.Socket();
+                client.connect(port,host,function(){
+                    client.write(buf);
+                    console.log('连接到服务器！');
+                //向端口写入数据到达服务端
+                });
+                client.on('data',function(data){
+                    var getdata = JSON.parse(data);
+                    // console.log(getdata['code']);
+                    console.log(data);
+                    client.end();
+                    console.log('和服务器断开连接。');
+                    res.json(getdata);
+                //得到服务端返回来的数据
+                });
+                client.on('error',function(error){
+                //错误出现之后关闭连接
+                console.log('error:'+error);
+                res.json({
+                    'code': '0',
+                    'result': false,
+                    // 'details': error.message
+                    'details': '连接发生错误'
+                });
+                // client.destory();
+                });
+                client.on('close',function(){
+                //正常关闭连接
+                console.log('Connection closed');
+                });
+            } catch(error){
+                console.error(error);
+                res.json({
+                    'code': '1',
+                    'result': false,
+                    'details': error.message
+                });
+            }
+            
 
             
 
